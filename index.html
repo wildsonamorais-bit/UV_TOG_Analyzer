@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UV–TOG Analyzer</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>UV–TOG Analyzer</h1>
+    <p class="muted">Tratamento UV • PCA • PLS • Previsão de TOG</p>
+    <nav>
+      <button data-tab="data" class="active">1. Dados</button>
+      <button data-tab="spectra">2. Espectros</button>
+      <button data-tab="pre">3. Pré-processamento</button>
+      <button data-tab="pca">4. PCA</button>
+      <button data-tab="pls">5. PLS</button>
+      <button data-tab="validation">6. Validação</button>
+      <button data-tab="model">7. Modelo</button>
+      <button data-tab="predict">8. Prever TOG</button>
+      <button data-tab="export">9. Exportar</button>
+    </nav>
+  </aside>
+
+  <main>
+    <section id="tab-data" class="tab active">
+      <h2>Dados de calibração</h2>
+      <div class="toolbar">
+        <label class="filebtn">Importar TXT
+          <input id="calFiles" type="file" accept=".txt,.TXT" multiple hidden>
+        </label>
+        <button id="clearCal">Limpar</button>
+        <button id="exampleBtn">Carregar exemplo</button>
+      </div>
+      <p class="hint">Após importar, informe a concentração conhecida de cada amostra em ppm. Para amostras usadas apenas para previsão, deixe o campo vazio e use a aba “Prever TOG”.</p>
+
+      <div class="grid2">
+        <div>
+          <h3>Amostras</h3>
+          <div class="tablewrap">
+            <table id="sampleTable">
+              <thead><tr><th>Amostra</th><th>ppm</th><th>Válidos</th><th>NaN</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Resumo</h3>
+          <div id="dataSummary" class="metrics"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-spectra" class="tab">
+      <h2>Espectros UV</h2>
+      <canvas id="rawChart" width="900" height="430"></canvas>
+      <div id="spectraLegend" class="legend"></div>
+    </section>
+
+    <section id="tab-pre" class="tab">
+      <h2>Pré-processamento</h2>
+      <div class="controls">
+        <label>λ mínimo (nm)<input id="lambdaMin" type="number"></label>
+        <label>λ máximo (nm)<input id="lambdaMax" type="number"></label>
+        <label>Método
+          <select id="preMethod">
+            <option value="none">Raw</option>
+            <option value="mc">Mean centering</option>
+            <option value="snv">SNV</option>
+            <option value="norm">Normalização vetorial</option>
+            <option value="sg1">Savitzky-Golay 1ª derivada</option>
+            <option value="sg2">Savitzky-Golay 2ª derivada</option>
+          </select>
+        </label>
+        <button id="applyPre" class="primary">Aplicar tratamento</button>
+      </div>
+      <div id="preInfo" class="notice"></div>
+      <canvas id="preChart" width="900" height="430"></canvas>
+    </section>
+
+    <section id="tab-pca" class="tab">
+      <h2>PCA exploratória</h2>
+      <div class="toolbar"><button id="runPCA" class="primary">Executar PCA</button></div>
+      <div class="grid2">
+        <canvas id="pcaScoreChart" width="500" height="380"></canvas>
+        <canvas id="pcaVarChart" width="500" height="380"></canvas>
+      </div>
+      <div id="pcaInfo" class="notice"></div>
+    </section>
+
+    <section id="tab-pls" class="tab">
+      <h2>Calibração PLS</h2>
+      <div class="controls">
+        <label>Máximo de LV<input id="maxLV" type="number" value="6" min="1" max="20"></label>
+        <label>Validação
+          <select id="cvMethod">
+            <option value="loo">Leave-one-out</option>
+            <option value="kfold">K-fold</option>
+          </select>
+        </label>
+        <label>K folds<input id="kFolds" type="number" value="5" min="2" max="20"></label>
+        <button id="runPLS" class="primary">Gerar PLS</button>
+      </div>
+      <div class="grid2">
+        <canvas id="rmseChart" width="500" height="380"></canvas>
+        <canvas id="predChart" width="500" height="380"></canvas>
+      </div>
+      <div id="plsMetrics" class="metrics"></div>
+    </section>
+
+    <section id="tab-validation" class="tab">
+      <h2>Validação e diagnóstico</h2>
+      <div class="grid2">
+        <canvas id="residChart" width="500" height="380"></canvas>
+        <canvas id="vipChart" width="500" height="380"></canvas>
+      </div>
+      <div id="validationTableWrap" class="tablewrap"></div>
+    </section>
+
+    <section id="tab-model" class="tab">
+      <h2>Modelo</h2>
+      <div class="toolbar">
+        <button id="downloadModel" class="primary">Salvar modelo JSON</button>
+        <label class="filebtn">Carregar modelo
+          <input id="loadModelFile" type="file" accept=".json" hidden>
+        </label>
+      </div>
+      <pre id="modelSummary"></pre>
+    </section>
+
+    <section id="tab-predict" class="tab">
+      <h2>Prever TOG de novas amostras</h2>
+      <div class="toolbar">
+        <label class="filebtn">Importar novas amostras
+          <input id="predFiles" type="file" accept=".txt,.TXT" multiple hidden>
+        </label>
+        <button id="runPredict" class="primary">Prever TOG</button>
+      </div>
+      <div class="tablewrap">
+        <table id="predTable">
+          <thead><tr><th>Amostra</th><th>TOG previsto (ppm)</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <canvas id="predBarChart" width="900" height="400"></canvas>
+    </section>
+
+    <section id="tab-export" class="tab">
+      <h2>Exportar resultados</h2>
+      <div class="toolbar">
+        <button id="exportCalCSV">Calibração CSV</button>
+        <button id="exportPredCSV">Previsões CSV</button>
+        <button id="exportMetricsCSV">Métricas CSV</button>
+      </div>
+      <p class="hint">Os arquivos são processados localmente no navegador. Nenhum espectro é enviado para servidor.</p>
+    </section>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
